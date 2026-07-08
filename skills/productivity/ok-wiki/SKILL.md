@@ -1,7 +1,6 @@
 ---
 name: ok-wiki
-description: Initialize and maintain an OKF v0.1 wiki bundle (ok-wiki) compatible with Obsidian.
-disable-model-invocation: true
+description: Manage ok-wiki. Use when the user wants to ingest/update a concept, query/traverse the wiki to answer questions, or run a lint/health check on the wiki.
 ---
 
 ## Setup
@@ -44,7 +43,7 @@ Use when answering questions or synthesizing insights.
 2. **Synthesize**: Read matched concept files and formulate a response citing the relevant Concept IDs (e.g., `[Title](relative/path/to/concept.md)`).
 3. **Compounding**: If synthesis yields new durable knowledge, ask the user if they want to save it as a new concept page; if so, execute **Branch A**.
 
-- **Completion Criterion**: The query is resolved with citations, and any approved synthesis is compiled and filed as a new concept.
+- **Completion Criterion**: The query is resolved with citations to relevant concept files. If synthesis yielded new knowledge and was approved by the user, the new concept is created and validated per Branch A.
 
 ### Branch C: Lint and Health Check
 Use when checking the bundle's integrity.

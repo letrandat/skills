@@ -1,0 +1,11 @@
+{
+  "name": "letrandat-skills",
+  "version": "0.1.0",
+  "description": "Dat's personal agent skills",
+  "author": {
+    "name": "Dat Le"
+  },
+  "skills": [
+    "skills/productivity/ok-wiki"
+  ]
+}

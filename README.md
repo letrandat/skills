@@ -16,7 +16,7 @@ npx skills@latest add letrandat/skills
 
 ## Catalog
 
-### Personal Skills (Non-Promoted)
-These skills are tied to my local environment and configuration. You can view the list of personal skills in the [skills/personal/](./skills/personal/README.md) directory.
+### Productivity Skills (Promoted)
+These are daily non-code workflow tools to improve productivity. You can view the full list in the [skills/productivity/](./skills/productivity/README.md) directory.
 
-- [anki-connect](./skills/personal/anki-connect/SKILL.md) — Interacting with Anki through the AnkiConnect local HTTP API.
+- [ok-wiki](./skills/productivity/ok-wiki/SKILL.md) — Initialize and maintain an OKF v0.1 wiki bundle (ok-wiki) compatible with Obsidian.
