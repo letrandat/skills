@@ -33,7 +33,7 @@ Use when writing a new concept or modifying an existing page.
    Interlink concepts using relative markdown links (e.g., `[label](../runbooks/deploy.md)`).
 2. **Progressive Disclosure**: Add/update the concept link and description in the directory's `index.md`.
 3. **Chronological Log**: Locate or create `<wiki_root>/log.md` starting with a `# Change Log` header. Under a top-level date header `## YYYY-MM-DD` (newest first), log the modification using a bold action verb (e.g., `- **Creation** of ...`).
-4. **Validate**: Run `python3 skills/in-progress/ok-wiki/scripts/validate.py <wiki_root>`.
+4. **Validate**: Run `python3 "${CLAUDE_SKILL_DIR}/scripts/validate.py" <wiki_root>`.
 
 - **Completion Criterion**: Concept file exists with YAML frontmatter, its parent `index.md` references it, `log.md` contains the change entry under the current date, and `validate.py` passes without errors.
 
@@ -49,7 +49,7 @@ Use when answering questions or synthesizing insights.
 ### Branch C: Lint and Health Check
 Use when checking the bundle's integrity.
 
-1. **Validate**: Run `python3 skills/in-progress/ok-wiki/scripts/validate.py <wiki_root>`.
+1. **Validate**: Run `python3 "${CLAUDE_SKILL_DIR}/scripts/validate.py" <wiki_root>`.
 2. **Resolve**: Address any validation errors or warnings (broken links, orphaned concepts, missing frontmatter).
 
 - **Completion Criterion**: `validate.py` passes successfully with all structural integrity issues corrected.
