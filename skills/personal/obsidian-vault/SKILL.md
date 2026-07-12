@@ -12,7 +12,7 @@ Customized with a local vault path.
 
 ## Vault location
 
-`$HOME/ws/obsidian-vault/`
+`$HOME/ws/repos/obsidian-vault/`
 
 Mostly flat at root level.
 
@@ -34,10 +34,10 @@ Mostly flat at root level.
 
 ```bash
 # Search by filename
-find "$HOME/ws/obsidian-vault/" -name "*.md" | grep -i "keyword"
+find "$HOME/ws/repos/obsidian-vault/" -name "*.md" | grep -i "keyword"
 
 # Search by content
-grep -rl "keyword" "$HOME/ws/obsidian-vault/" --include="*.md"
+grep -rl "keyword" "$HOME/ws/repos/obsidian-vault/" --include="*.md"
 ```
 
 Or use Grep/Glob tools directly on the vault path.
@@ -54,11 +54,11 @@ Or use Grep/Glob tools directly on the vault path.
 Search for `[[Note Title]]` across the vault to find backlinks:
 
 ```bash
-grep -rl "\\[\\[Note Title\\]\\]" "$HOME/ws/obsidian-vault/"
+grep -rl "\\[\\[Note Title\\]\\]" "$HOME/ws/repos/obsidian-vault/"
 ```
 
 ### Find index notes
 
 ```bash
-find "$HOME/ws/obsidian-vault/" -name "*Index*"
+find "$HOME/ws/repos/obsidian-vault/" -name "*Index*"
 ```
