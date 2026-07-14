@@ -19,4 +19,4 @@ npx skills@latest add letrandat/skills
 ### Productivity Skills (Promoted)
 These are daily non-code workflow tools to improve productivity. You can view the full list in the [skills/productivity/](./skills/productivity/README.md) directory.
 
-- [ok-wiki](./skills/productivity/ok-wiki/SKILL.md) — Initialize and maintain an OKF v0.1 wiki bundle (ok-wiki) compatible with Obsidian.
+- [brain](./skills/productivity/brain/SKILL.md) — Record, recall, revise, connect, and review a persistent OKF v0.1 second brain.

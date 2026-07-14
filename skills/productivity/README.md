@@ -4,8 +4,8 @@ Daily non-code workflow tools to improve productivity.
 
 ## User-invoked
 
-*(None)*
+- [brain](./brain/SKILL.md) — Record, recall, revise, connect, and review a persistent OKF v0.1 second brain.
 
 ## Model-invoked
 
-- [ok-wiki](./ok-wiki/SKILL.md) — Initialize and maintain an OKF v0.1 wiki bundle (ok-wiki) compatible with Obsidian.
+*(None)*

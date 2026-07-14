@@ -6,7 +6,7 @@ import json
 
 
 def load_config():
-    config_path = os.path.expanduser("~/.config/ok-wiki/config.json")
+    config_path = os.path.expanduser("~/.config/brain/config.json")
     if os.path.isfile(config_path):
         try:
             with open(config_path, "r", encoding="utf-8") as f:
@@ -81,7 +81,7 @@ def extract_relative_links(body, current_dir):
 
 
 def validate_bundle(root_dir):
-    print(f"Scanning OK-Wiki bundle at: {root_dir}")
+    print(f"Scanning Brain at: {root_dir}")
     if not os.path.isdir(root_dir):
         print(f"Error: {root_dir} is not a valid directory.")
         return 1
@@ -252,7 +252,7 @@ def validate_bundle(root_dir):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python3 validate.py <path_to_wiki_root>")
+        print("Usage: python3 validate.py <path_to_brain_root>")
         sys.exit(1)
 
     target_root = os.path.abspath(sys.argv[1])
