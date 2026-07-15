@@ -1,145 +1,69 @@
 ---
 name: brain
-description: Manage a persistent second brain. Use only when the user explicitly invokes Brain to record, recall, revise, connect, or review durable knowledge.
+description: Record, recall, revise, connect, and review a persistent OKF v0.1 second brain.
 disable-model-invocation: true
 ---
 
-## How to Talk to Brain
+## Brain Language
 
-Invoke Brain explicitly, then describe the outcome naturally. The operation names below are a guide, not required command syntax.
+Invoke Brain explicitly, then describe the outcome naturally. The operation names are a guide, not command syntax.
 
-| Operation | Purpose | Natural requests |
-| --- | --- | --- |
-| **Record** | Incorporate new durable knowledge. | “Remember this.” “Record what we learned today.” “Save this knowledge.” |
-| **Recall** | Retrieve and synthesize stored knowledge without changing Brain. | “Tell me about deployment.” “What do we know about authentication?” |
-| **Revise** | Intentionally correct, restructure, or replace existing knowledge. | “Correct the deployment concept.” “Fix what we know about rollback.” |
-| **Connect** | Create meaningful relationships between concepts. | “Connect these ideas.” “How are deployment failures and rollback related?” |
-| **Review / Reflect** | Inspect knowledge for conflicting facts, gaps, staleness, weak support, and structural problems. | “Review Brain’s health.” “Find conflicting facts.” “What are we missing?” |
+| Operation | Choose it to | Natural requests | When selected |
+| --- | --- | --- | --- |
+| **Record** | Incorporate new durable knowledge. | “Remember this.” “Record what we learned today.” | Read [Record](./operations/record.md) completely before acting. |
+| **Recall** | Retrieve and synthesize stored knowledge, or explain Brain’s design philosophy. | “What does Brain know about authentication?” | Read [Recall](./operations/recall.md) completely before acting. |
+| **Revise** | Correct, restructure, or replace existing knowledge. | “Correct the deployment concept.” “Repair the indexes.” | Read [Revise](./operations/revise.md) completely before acting. |
+| **Connect** | Represent meaningful relationships between concepts. | “Connect these ideas.” | Read [Connect](./operations/connect.md) completely before acting. |
+| **Review / Reflect** | Inspect knowledge quality, support, currency, and structure. | “Review Brain’s health.” “Find conflicting facts.” | Read [Review / Reflect](./operations/review-reflect.md) completely before acting. |
 
-If the right operation is unclear, use **Record** or say “Remember this.” Brain inspects existing concepts and decides whether to create a concept or incorporate the knowledge into an existing one.
+When the user asks Brain to remember durable knowledge without naming an operation, select **Record**. Compound requests select every operation needed for the requested outcome.
 
-### Read-Only and Changing Operations
+## Authorization Boundary
 
-- **Recall**, external research, and **Review / Reflect** are read-only by default.
-- Changing Brain requires an explicit action such as record, remember, revise, correct, fix, repair, or connect.
-- Operations may be combined. “Review Brain, then fix safe structural issues” means inspect first, apply only the authorized deterministic repairs, and report both findings and changes.
-- Authorization to fix structural issues never authorizes changing substantive knowledge. Brain asks before resolving ambiguous or conflicting claims unless the user supplied the evidence and explicitly requested the correction.
+- **Recall**, external research, and **Review / Reflect** are read-only. They may propose changes.
+- Brain changes only what an explicit changing action authorizes: record, remember, revise, correct, fix, repair, or connect.
+- Structural repair covers deterministic changes that preserve meaning, such as adding one unambiguous missing index entry or repairing a relative link with exactly one clear target.
+- Substantive changes—choosing between conflicting facts, deleting or merging concepts, inventing metadata that requires judgment, or rewriting claims—require the user’s explicit authorization and sufficient evidence.
+- External research may inform the response. It enters Brain only through an explicitly selected changing operation.
 
-### Examples
-
-- “Record what we learned about deployment today.”
-- “Remember this article’s conclusions about authentication.”
-- “Tell me what Brain knows about rollback procedures.”
-- “Correct the deployment concept—the old rollback procedure is wrong.”
-- “Connect deployment failures with the incident-response concepts.”
-- “Reflect on deployment knowledge and find conflicting facts.”
-- “Review Brain, fix safe structural issues, and report anything that needs my judgment.”
+Authorization remains scoped in compound requests: permission to repair structure leaves substantive knowledge unchanged.
 
 ## Setup
 
-1. Resolve `brain_root` from `~/.config/brain/config.json`.
-2. If the configuration is missing, ask the user where Brain should live and suggest `~/Brain` by default.
-3. Create or verify the chosen directory, then store its absolute path:
+Brain’s configuration source is `~/.config/brain/config.json`; configurations under earlier skill names are unrelated.
+
+1. **Resolve Brain Root.** Read `brain_root` from `~/.config/brain/config.json` and confirm it is an absolute path whose directory exists.
+   - **Complete when:** `brain_root` resolves to an existing directory, or configuration is confirmed missing or invalid.
+2. **Choose a root when needed.** When configuration is missing or invalid, ask where Brain should live, suggest `~/Brain`, and create or verify the chosen directory.
+   - **Complete when:** valid existing configuration needs no choice, or the user has chosen a directory that exists.
+3. **Store replacement configuration when needed.** When setup required a choice, write the absolute path to `~/.config/brain/config.json`:
 
    ```json
    {
-     "brain_root": "/absolute/path/to/Brain",
-     "ignore_dirs": []
+     "brain_root": "/absolute/path/to/Brain"
    }
    ```
 
-Do not read or migrate configuration from an earlier skill name.
+   - **Complete when:** valid existing configuration is unchanged, or rereading the replacement yields the chosen absolute `brain_root` and the directory exists.
 
-- **Completion criterion**: `brain_root` is an absolute path in `~/.config/brain/config.json`, and the directory exists.
+## Shared Execution Spine
 
-## Operations
+1. **Select.** Map every requested outcome to the Brain Language table above. For compound requests, select every applicable operation; run evidence-producing read-only operations before the changing operations that depend on them, and otherwise preserve the user’s requested order.
+   - **Complete when:** every requested outcome belongs to a selected operation and the dependency order is explicit.
+2. **Load.** Before acting, read every selected operation file completely, then read each distinct specification or conceptual reference whose stated condition applies once.
+   - **Complete when:** every selected operation file and every distinct applicable reference has been read completely.
+3. **Act.** Execute the selected files in dependency order, staying inside the authorization boundary and meeting each step’s completion check.
+   - **Complete when:** every selected branch step is complete, and every proposed but unauthorized change is reserved for the report.
+4. **Close the run.** If Brain changed, ensure `<brain_root>/log.md` starts with `# Change Log`, add one consolidated entry with a bold action verb under today’s `## YYYY-MM-DD` heading in newest-first order, run `python3 "${CLAUDE_SKILL_DIR}/scripts/validate.py" <brain_root>` once against the final Knowledge Bundle, and report every mutation, validator warning, and unresolved judgment call. A read-only run reports its answer or findings and confirms Brain remained unchanged.
+   - **Complete when:** a changing run has one correctly placed log entry, final validation has no errors, and the report accounts for every mutation, warning, and unresolved judgment call; or a read-only run has reported its result and made no changes.
 
-### Record
+## Shared Writing Rules
 
-Use when the user provides new durable knowledge or asks Brain to remember something.
-
-1. **Inspect existing knowledge**: Read relevant directory indexes and search concepts before choosing where the knowledge belongs.
-2. **Create or incorporate**: Create a new concept only when the knowledge does not belong in an existing one. Every concept has self-describing frontmatter:
-
-   ```yaml
-   ---
-   type: project # REQUIRED: lowercase category (e.g. project, runbook, table)
-   title: Study Tracker
-   description: Personal tracker
-   tags: [personal, study]
-   timestamp: 2026-07-07T16:58:00Z
-   ---
-   # Concept Title
-
-   Body content...
-   ```
-
-3. **Index**: Add or update the concept link and description in its directory’s `index.md`.
-4. **Connect**: Add clear, evidence-backed relative Markdown links to related concepts. Report each automatic connection. Suggest rather than write ambiguous or interpretive relationships.
-5. **Log**: Ensure `<brain_root>/log.md` starts with `# Change Log`. Under a top-level `## YYYY-MM-DD` header (newest first), record the change with a bold action verb.
-6. **Validate**: Run `python3 "${CLAUDE_SKILL_DIR}/scripts/validate.py" <brain_root>`.
-
-- **Completion criterion**: The knowledge is incorporated into a valid concept, its parent index references it, clear connections are maintained, the current date’s log records the change, and validation passes without errors.
-
-### Recall
-
-Use when the user asks what Brain knows or requests a synthesis from stored knowledge.
-
-1. **Traverse**: Read relevant `index.md` files and search for matching concepts.
-2. **Synthesize**: Answer strictly from Brain by default and cite the relevant concepts with relative Markdown links.
-3. **Expose gaps**: State when Brain lacks enough information. Do not silently fill gaps with model knowledge.
-4. **Respect the write boundary**: External research remains read-only unless the user explicitly pairs it with Record or another storage instruction.
-
-- **Completion criterion**: The question is answered from stored knowledge with concept citations, and gaps or outside information are clearly identified. Brain is unchanged.
-
-### Revise
-
-Use when the user explicitly asks to correct, restructure, or replace existing knowledge.
-
-1. **Locate**: Read the target concept and any connected concepts affected by the requested change.
-2. **Revise with evidence**: Apply only the authorized semantic change. Preserve conflicting claims when the available evidence does not resolve them.
-3. **Maintain structure**: Update timestamps, indexes, clear connections, and the change log as needed.
-4. **Validate**: Run `python3 "${CLAUDE_SKILL_DIR}/scripts/validate.py" <brain_root>`.
-
-- **Completion criterion**: The requested change and its clear downstream effects are applied, logged, validated, and summarized.
-
-### Connect
-
-Use when relationships among concepts are the user’s primary intent. Record and Revise also perform this operation automatically for clear, evidence-backed relationships.
-
-1. **Inspect both sides**: Read every concept participating in the proposed relationship.
-2. **Connect conservatively**: Add relative Markdown links when the relationship is factual and unambiguous.
-3. **Suggest ambiguity**: Report speculative, interpretive, or unsupported relationships instead of writing them.
-4. **Maintain and validate**: Update affected indexes or logs as appropriate, then run the validator.
-
-- **Completion criterion**: Supported relationships are represented by valid relative links, ambiguous relationships are presented as suggestions, and all changes are reported.
-
-### Review / Reflect
-
-Use when the user wants to assess the quality, consistency, completeness, currency, or structure of Brain.
-
-1. **Validate structure**: Run `python3 "${CLAUDE_SKILL_DIR}/scripts/validate.py" <brain_root>` and collect errors and warnings.
-2. **Inspect knowledge**: Look for conflicting facts, stale claims, weak or missing support, missing concepts, and useful unanswered questions.
-3. **Report first**: Present findings with supporting concept links. Review / Reflect alone never changes Brain.
-4. **Honor compound authorization**: If the user also requested fixes, make only the explicitly authorized changes after inspection.
-
-Safe structural repairs are deterministic and do not change meaning, such as adding an unambiguous missing index entry or repairing a relative link with exactly one clear target. Do not choose between conflicting facts, delete or merge concepts, invent metadata requiring judgment, or rewrite claims without explicit authorization.
-
-- **Completion criterion**: Findings and evidence are reported; authorized safe repairs are applied and summarized; ambiguous structural issues and semantic decisions remain for the user.
+- Write every internal concept link—including citations and relationships—as relative Markdown: `[label](../path/to/file.md)`.
+- Write supported, unambiguous relationships; reserve speculative, interpretive, or unsupported candidates for the report.
+- Consume permissively: unknown frontmatter keys are valid, and broken internal links do not block reading.
 
 ## Reference
 
-### Specifications and Context
-
-- [SPEC.md](./references/SPEC.md): Full Open Knowledge Format (OKF) specification.
-- [llm-wiki.md](./references/llm-wiki.md): The original conceptual background on building self-maintaining compounding knowledge collections.
-
-### Structural Reserved Files
-
-- `index.md` — directory-level index providing progressive navigation.
-- `log.md` — chronological log of Brain updates.
-
-### Obsidian and Parser Compatibility
-
-- **Link format**: Always use relative Markdown links `[label](../path/to/file.md)`.
-- **Permissive consumption**: Tolerate broken links and ignore unknown frontmatter keys without throwing errors.
+- [Open Knowledge Format v0.1](./references/SPEC.md) is the single source of truth for Knowledge Bundle structure. Operation files state when it must be loaded.
+- [LLM Wiki](./references/llm-wiki.md) is the preserved conceptual background routed through Recall.
