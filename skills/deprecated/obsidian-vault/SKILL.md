@@ -1,6 +1,6 @@
 ---
 name: obsidian-vault
-description: Search, create, and manage notes in the Obsidian vault with wikilinks and index notes. Use when user wants to find, create, or organize notes in Obsidian.
+description: Deprecated. Historical workflow for managing notes in a local Obsidian vault; use Brain instead.
 ---
 
 <!-- Derived from:
@@ -9,6 +9,8 @@ Customized with a local vault path.
 -->
 
 # Obsidian Vault
+
+> **Deprecated:** The configured vault was migrated to Brain on 2026-07-15. This skill remains only as a historical reference; use the `brain` skill for persistent knowledge.
 
 ## Vault location
 
