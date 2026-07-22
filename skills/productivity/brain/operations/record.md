@@ -8,5 +8,5 @@ Read [Open Knowledge Format v0.1](../references/SPEC.md) completely before inter
    - **Complete when:** all durable knowledge in scope has one clear home, required concept structure is valid, and provenance is retained where available.
 3. **Maintain navigation.** Add or update the concept’s parent-index entry and description, including any newly required parent navigation.
    - **Complete when:** every created or moved concept is reachable through its parent index, and changed descriptions match their concepts.
-4. **Maintain connections.** Apply the shared relationship rule in `SKILL.md` to every related concept encountered.
-   - **Complete when:** every relationship candidate is either linked consistently or reserved for the report.
+4. **Maintain connections.** Apply the **relationship rule** in `SKILL.md` to every related concept encountered.
+   - **Complete when:** every relationship candidate has a support classification and is either linked as supported or reserved for the report.

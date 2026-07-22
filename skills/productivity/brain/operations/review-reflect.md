@@ -2,7 +2,7 @@
 
 For a structural review, read [Open Knowledge Format v0.1](../references/SPEC.md) completely before interpreting diagnostics.
 
-1. **Check structure when in scope.** For a structural review, run `python3 "${CLAUDE_SKILL_DIR}/scripts/validate.py" <brain_root>` and collect every error and warning. For a semantic review, identify the concepts and indexes that define the review surface.
+1. **Check structure when in scope.** For a structural review, run the validator once (`python3 <skill_root>/scripts/validate.py <brain_root>` per **Validator** in `SKILL.md`) and collect every error and warning. For a semantic review, identify the concepts and indexes that define the review surface.
    - **Complete when:** structural diagnostics are fully captured when applicable, and the complete semantic review surface is named.
 2. **Inspect knowledge.** Look across the review surface for conflicting facts, stale claims, weak or missing support, missing concepts, and useful unanswered questions.
    - **Complete when:** every category has been checked across the full review surface and each finding has supporting concept evidence.
