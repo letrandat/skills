@@ -4,4 +4,4 @@ Draft skills that are in development and not yet ready to ship.
 
 ## Skills
 
-*(None)*
+- [what-lasts](./what-lasts/SKILL.md) — Separate the last agent answer into useful permanent and expiring information.

@@ -24,6 +24,26 @@ _Avoid_: Storage directory, content root
 A single durable unit of knowledge stored as a Markdown page within Brain.
 _Avoid_: Note, document
 
+**Permanent Information**:
+Information about a recurring principle, cause, or behavior that is likely to remain useful and compound with later learning.
+_Avoid_: Durable knowledge, stable fact
+
+**Expiring Information**:
+Information tied to a particular time, state, event, measurement, version, or condition that can lose usefulness as conditions change.
+_Avoid_: Temporary information, short-term information
+
+**Uncertain Information**:
+Information that cannot be classified confidently as permanent or expiring from the available context.
+_Avoid_: Mixed information
+
+**Recheck Trigger**:
+A condition whose occurrence means expiring information should be checked again before it is relied upon.
+_Avoid_: Expiration date, reminder
+
+**What Lasts**:
+The user-invoked lens for separating useful permanent information from expiring and uncertain information in an agent answer.
+_Avoid_: Memory review, Brain review
+
 **Record**:
 The Brain operation for incorporating new durable knowledge.
 
