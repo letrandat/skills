@@ -37,7 +37,7 @@ Information that cannot be classified confidently as permanent or expiring from 
 _Avoid_: Mixed information
 
 **Recheck Trigger**:
-A condition whose occurrence means expiring information should be checked again before it is relied upon.
+An event or condition that tells you Expiring Information can be out of date and must be checked again before use.
 _Avoid_: Expiration date, reminder
 
 **What Lasts**:
