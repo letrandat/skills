@@ -1,10 +1,10 @@
 ---
-name: voice
+name: fix-typo
 description: Session mode for voice-dictated prompts. Apply the fuzzy-assumption rule for the rest of this chat.
 disable-model-invocation: true
 ---
 
-# Voice
+# Fix typo
 
 This chat is voice-dictated. On fuzzy or errors (code symbols, commands, routes, env vars, domain terms):
 
