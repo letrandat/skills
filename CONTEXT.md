@@ -58,3 +58,29 @@ The Brain operation for creating meaningful relationships between concepts.
 
 **Review / Reflect**:
 The read-only Brain operation for inspecting consistency, conflicting facts, gaps, and structural health. It makes changes only when paired with an explicit action such as fix, correct, revise, repair, record, or connect.
+
+### Grilling
+
+**Self-Grill**:
+A grill-with-docs session whose stand-in picks every decision from the brief and whose output is a Self-Grill Log.
+_Avoid_: solo grill, batch grill, cell grill
+
+**Brief**:
+The up-front dump of knowns, unknowns, and wants that the stand-in treats as source of truth.
+_Avoid_: prompt dump, context dump
+
+**Stand-in**:
+The agent answering frontier questions in place of the human.
+_Avoid_: simulated user, persona
+
+**Retract**:
+The act of unsettling a pick and every question that depended on it after a check fails.
+_Avoid_: undo, rollback
+
+**Self-Grill Log**:
+The review artifact of a Self-Grill: every question, its options, pick, why, grounding, and status.
+_Avoid_: transcript, report
+
+**Assumption**:
+A pick that is neither grounded in the brief nor checked.
+_Avoid_: guess
