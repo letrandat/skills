@@ -58,3 +58,9 @@ The Brain operation for creating meaningful relationships between concepts.
 
 **Review / Reflect**:
 The read-only Brain operation for inspecting consistency, conflicting facts, gaps, and structural health. It makes changes only when paired with an explicit action such as fix, correct, revise, repair, record, or connect.
+
+**ELI5**:
+The user-invoked operation to explain a complex topic using extremely simple language and a visual HTML artifact.
+
+**Visual Explanation**:
+An explanation that relies primarily on diagrams, flowcharts, or spatial layout rather than prose.
