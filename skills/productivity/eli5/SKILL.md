@@ -4,4 +4,4 @@ description: Explain like I am 5
 disable-model-invocation: true
 ---
 
-Explain like I'm someone who knows nothing about this topic, using a HTML artifact with big pictures and few words
+Explain like I'm someone who knows nothing about this topic, using a HTML artifact with big pictures and few words. Open artifact with `open` command.
