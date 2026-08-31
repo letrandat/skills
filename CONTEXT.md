@@ -64,3 +64,7 @@ The user-invoked operation to explain a complex topic using extremely simple lan
 
 **Visual Explanation**:
 An explanation that relies primarily on diagrams, flowcharts, or spatial layout rather than prose.
+
+**Sum up**:
+The user-invoked one-line session status: `Sum up —` plus a 25–40 word sentence of what the user asked or what we changed.
+_Avoid_: Recap, session recap, summarize, handoff
