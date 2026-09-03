@@ -22,3 +22,12 @@ These are daily non-code workflow tools to improve productivity. You can view th
 - [brain](./skills/productivity/brain/SKILL.md) — Record, recall, revise, connect, and review a persistent OKF v0.1 second brain.
 - [eli5](./skills/productivity/eli5/SKILL.md) — Explain like I am 5.
 - [fix-typo](./skills/productivity/fix-typo/SKILL.md) — Session mode for voice-dictated prompts; assume fuzzy terms and proceed.
+
+## Prompts
+
+Portable (khả chuyển, linh động), zero-dependency prompts for off-machine use across any agent harness. See the [prompts/](./prompts/README.md) directory for details.
+
+- [system-diagram-grill](./prompts/system-diagram-grill.md) — Survey and grill complex subsystem architecture, dataflow, and boundaries into diagrams.
+- [pr-flow-diagram-grill](./prompts/pr-flow-diagram-grill.md) — Group PR code changes into functional flows, propose diagrams, and walk the code.
+- [ticket-solution-diagram-grill](./prompts/ticket-solution-diagram-grill.md) — Dissect (mổ xẻ) an issue into paired As-Is failure mode vs To-Be invariant fix before writing code.
+
