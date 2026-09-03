@@ -8,7 +8,7 @@ timestamp: 2026-09-03
 
 # Ticket problem-solution diagram grill prompt
 
-A portable (khả chuyển, linh động), self-contained prompt for dissecting (mổ xẻ, phân tích chi tiết) any issue or ticket until the engineer can visualize the exact failure mode (As-Is), evaluate the target solution (To-Be) using the right diagram type, stress-test trade-offs on the frontier, and walk the proposed code changes before writing a single line of production code.
+A portable, self-contained prompt for dissecting any issue or ticket until the engineer can visualize the exact failure mode (As-Is), evaluate the target solution (To-Be) using the right diagram type, stress-test trade-offs on the frontier, and walk the proposed code changes before writing a single line of production code.
 
 Runs on any agent harness (Claude Code, Antigravity, Cursor, Codex, web chats) without requiring local installation of specialized skills or tools.
 
@@ -88,7 +88,7 @@ Goal: I can see exactly where and why the system fails (As-Is), verify why the p
 ## Example Invocation
 
 ```text
-Grill Ticket SKD-1472 (asyncpg tuple parameter binding error during vector cosine search) until we share pictures of the problem and the proposed solution, then walk those pictures against the code.
+Grill Ticket PROJ-123 (parameter binding error during vector similarity search) until we share pictures of the problem and the proposed solution, then walk those pictures against the code.
 
 Goal: I can see exactly where and why the system fails (As-Is), verify why the proposed fix works (To-Be) using the right diagram type, understand all architectural trade-offs, and know which code to touch first.
 ```

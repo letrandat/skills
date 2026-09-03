@@ -1,10 +1,10 @@
 # Agent Diagram-Grill Prompts
 
-A collection of portable (khả chuyển, linh động), zero-dependency prompts for AI coding agents (Claude Code, Antigravity, Cursor, Codex, or browser chats).
+A collection of portable, zero-dependency prompts for AI coding agents (Claude Code, Antigravity, Cursor, Codex, or browser chats).
 
 Unlike machine-bound skills, these prompts are 100% self-contained:
 - **No local path dependencies**: They require no local skill files (`~/.gemini/...` or `~/.grok/...`).
-- **Inlined Grilling Protocol**: Enforces relentless (không ngừng nghỉ) frontier-driven rounds, facts-vs-decisions division of labor, and shared understanding before drawing.
+- **Inlined Grilling Protocol**: Enforces relentless frontier-driven rounds, facts-vs-decisions division of labor, and shared understanding before drawing.
 - **Universal Visual Rendering**: Uses Archify if available (`/archify`), with automatic fallback to standalone self-contained HTML with inline SVG, or native Mermaid diagrams.
 - **Code-Grounded Traversal**: Diagram delivery is never the finish line. The agent must walk every hop against concrete `file:line` references in the codebase.
 
@@ -14,7 +14,7 @@ Unlike machine-bound skills, these prompts are 100% self-contained:
 | :--- | :--- | :--- | :--- |
 | [**system-diagram-grill**](./system-diagram-grill.md) | Surveying a subsystem, service, or complex domain surface (e.g., RAG, async pipelines, ingestion). | `architecture`, `workflow`, `sequence`, `dataflow`, `lifecycle` | `docs/diagrams/<system>-<view>.html` |
 | [**pr-flow-diagram-grill**](./pr-flow-diagram-grill.md) | Reviewing PRs or branch deltas by grouping changed files into named functional flows. | `sequence`, `dataflow`, `lifecycle` | `docs/diagrams/pr-<num>-<flow>.html` |
-| [**ticket-solution-diagram-grill**](./ticket-solution-diagram-grill.md) | Dissecting (mổ xẻ) an issue or bug into paired failure mode (As-Is) vs invariant fix (To-Be). | `sequence`, `lifecycle`, `dataflow`, `architecture` | `docs/diagrams/ticket-<id>-solution.html` |
+| [**ticket-solution-diagram-grill**](./ticket-solution-diagram-grill.md) | Dissecting an issue or bug into paired failure mode (As-Is) vs invariant fix (To-Be). | `sequence`, `lifecycle`, `dataflow`, `architecture` | `docs/diagrams/ticket-<id>-solution.html` |
 
 ## How to Use
 

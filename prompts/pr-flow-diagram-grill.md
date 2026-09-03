@@ -8,7 +8,7 @@ timestamp: 2026-09-03
 
 # PR flow-diagram grill prompt
 
-A portable (khả chuyển, linh động), self-contained prompt for grilling any pull request or branch diff until the reviewer can name the primary flow, what is new, what changed, how data moves, and which code to read first.
+A portable, self-contained prompt for grilling any pull request or branch diff until the reviewer can name the primary flow, what is new, what changed, how data moves, and which code to read first.
 
 Runs on any agent harness (Claude Code, Antigravity, Cursor, Codex, web chats) without requiring local installation of specialized skills or tools.
 
@@ -70,7 +70,7 @@ Goal: I can name the primary flow, what is new, what changed, how data moves, an
 
 ## Agent Mechanics & Protocol Inlining
 
-1. **Delta Flow Clustering**: Groups all changed files into cohesive (liên kết chặt chẽ) end-to-end flows rather than reviewing files alphabetically or by directory.
+1. **Delta Flow Clustering**: Groups all changed files into cohesive end-to-end flows rather than reviewing files alphabetically or by directory.
 2. **Leading Vocabulary**: Keeps the conversation grounded in *delta*, *flow*, *frontier*, *job*, *occupancy*, *product*, and *bookkeeping*.
 3. **Decisions vs. Facts**: The agent computes the diff and isolates callers; the reviewer decides primary vs secondary flows and what stays off the main canvas.
 4. **Code Pointer Walk**: Every hop on the diagram must be verifiable with an exact `file:line` reference before the review is marked complete.

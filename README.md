@@ -25,9 +25,9 @@ These are daily non-code workflow tools to improve productivity. You can view th
 
 ## Prompts
 
-Portable (khả chuyển, linh động), zero-dependency prompts for off-machine use across any agent harness. See the [prompts/](./prompts/README.md) directory for details.
+Portable, zero-dependency prompts for off-machine use across any agent harness. See the [prompts/](./prompts/README.md) directory for details.
 
 - [system-diagram-grill](./prompts/system-diagram-grill.md) — Survey and grill complex subsystem architecture, dataflow, and boundaries into diagrams.
 - [pr-flow-diagram-grill](./prompts/pr-flow-diagram-grill.md) — Group PR code changes into functional flows, propose diagrams, and walk the code.
-- [ticket-solution-diagram-grill](./prompts/ticket-solution-diagram-grill.md) — Dissect (mổ xẻ) an issue into paired As-Is failure mode vs To-Be invariant fix before writing code.
+- [ticket-solution-diagram-grill](./prompts/ticket-solution-diagram-grill.md) — Dissect an issue into paired As-Is failure mode vs To-Be invariant fix before writing code.
 
