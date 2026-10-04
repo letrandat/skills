@@ -21,6 +21,7 @@ These are daily non-code workflow tools to improve productivity. You can view th
 
 - [brain](./skills/productivity/brain/SKILL.md) — Record, recall, revise, connect, and review a persistent OKF v0.1 second brain.
 - [eli5](./skills/productivity/eli5/SKILL.md) — Explain like I am 5.
+- [say-it](./skills/productivity/say-it/SKILL.md) — One speakable cue when a dictated word was their pronunciation and they will say it themselves.
 
 ## Prompts
 
