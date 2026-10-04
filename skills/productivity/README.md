@@ -9,4 +9,4 @@ Daily non-code workflow tools to improve productivity.
 
 ## Model-invoked
 
-*(None)*
+- [say-it](./say-it/SKILL.md) — One speakable cue when a dictated word was their pronunciation and they will say it themselves.
