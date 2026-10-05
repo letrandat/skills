@@ -16,6 +16,11 @@ npx skills@latest add letrandat/skills
 
 ## Catalog
 
+### Engineering Skills (Promoted)
+These are daily code-work skills. You can view the full list in the [skills/engineering/](./skills/engineering/README.md) directory.
+
+- [sharpen-prompt](./skills/engineering/sharpen-prompt/SKILL.md) — Turn a rough coding request into a short poteto-mode prompt with a goal, a guard, and a done-check.
+
 ### Productivity Skills (Promoted)
 These are daily non-code workflow tools to improve productivity. You can view the full list in the [skills/productivity/](./skills/productivity/README.md) directory.
 
