@@ -304,5 +304,45 @@ class PublishTest(unittest.TestCase):
         self.assertEqual(git(self.repo, "log", "-1", "--format=%s"), "Record test")
 
 
+    def test_holds_when_the_remote_has_several_push_urls(self):
+        git(self.repo, "remote", "set-url", "--add", "--push", "origin", str(self.remote))
+        git(self.repo, "remote", "set-url", "--add", "--push", "origin", str(self.remote) + "-mirror")
+        code, output = self.run_publish("baseline")
+        self.assertEqual(code, 3, output)
+        self.assertIn("more than one push URL", output)
+
+    def test_review_diff_ignores_external_diff_helpers(self):
+        helper = Path(self._temporary_directory.name) / "helper.sh"
+        helper.write_text("#!/bin/sh\necho nothing to see\n")
+        helper.chmod(0o755)
+        git(self.repo, "config", "diff.external", str(helper))
+        self.run_publish("baseline")
+        self.write("new.md", "New")
+        code, output = self.run_publish("stage", "new.md")
+        self.assertEqual(code, 0, output)
+        self.assertIn("+title: New", output)
+        self.assertNotIn("nothing to see", output)
+
+    def test_unstages_when_staging_fails_after_add(self):
+        code, output = self.run_publish("baseline")
+        Path(output.split(": ", 1)[1].strip()).chmod(0o444)
+        self.write("new.md", "New")
+        code, output = self.run_publish("stage", "new.md")
+        self.assertEqual(code, 3, output)
+        self.assertEqual(git(self.repo, "diff", "--cached", "--name-only"), "")
+
+    def test_pushes_without_terminal_prompts(self):
+        record = Path(self._temporary_directory.name) / "ssh-env"
+        ssh = Path(self._temporary_directory.name) / "ssh.sh"
+        ssh.write_text(f"#!/bin/sh\necho \"$GIT_TERMINAL_PROMPT\" > {record}\nexit 1\n")
+        ssh.chmod(0o755)
+        git(self.repo, "config", "core.sshCommand", str(ssh))
+        git(self.repo, "remote", "set-url", "--push", "origin", "ssh://example.invalid/brain.git")
+        self.run_publish("baseline")
+        self.write("new.md", "New")
+        code, output = self.publish_run("new.md")
+        self.assertEqual(code, 4, output)
+        self.assertEqual(record.read_text().strip(), "0")
+
 if __name__ == "__main__":
     unittest.main()

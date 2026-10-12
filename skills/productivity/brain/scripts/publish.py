@@ -22,6 +22,7 @@ from typing import Dict, List, Optional, Sequence
 
 STATE_NAME = "brain-publish-state.json"
 VALIDATOR = Path(__file__).resolve().parent / "validate.py"
+PUSH_TIMEOUT = 300
 IN_PROGRESS = ("MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "REBASE_HEAD", "rebase-merge", "rebase-apply")
 
 
@@ -31,15 +32,15 @@ class Outcome(Exception):
         self.label, self.code, self.detail = label, code, detail
 
 
-RECOVERY = "later runs that touch these files, including log.md, hold until the changes are committed or discarded"
+RECOVERY = "later runs that touch these files, including log.md, hold until the changes are committed and pushed, or discarded"
 
 
 def hold(detail: str) -> Outcome:
     return Outcome("HOLD", 3, detail)
 
 
-def git(root: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess:
-    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+def git(root: Path, *args: str, check: bool = True, **options) -> subprocess.CompletedProcess:
+    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, **options)
     if check and result.returncode != 0:
         raise hold(f"git {' '.join(args)} failed: {result.stderr.strip()}")
     return result
@@ -142,6 +143,8 @@ def baseline(root: Path) -> Outcome:
         state.update(repo_state(root))
         if not state["remote"]:
             state["skip"] = f"{state['branch']} has no upstream"
+        elif "\n" in state["push_urls"]:
+            state["hold"] = f"{state['remote']} has more than one push URL"
         elif out(root, "rev-parse", "@{upstream}") != state["head"]:
             state["hold"] = "the branch is ahead of or behind its upstream"
         elif git(root, "diff", "--cached", "--quiet", check=False).returncode:
@@ -173,16 +176,19 @@ def stage(root: Path, files: Sequence[str]) -> Outcome:
     preexisting = sorted(set(state["dirty"]) & set(repo_paths))
     if preexisting:
         raise hold(f"files had uncommitted edits before the run: {preexisting}; {RECOVERY}")
-    git(root, "add", "-A", "--", *literal(repo_paths))
-    names = git(root, "diff", "--cached", "--name-only", "--no-renames", "--no-relative", "-z").stdout
-    staged = set(filter(None, names.split("\0")))
-    if staged != set(repo_paths):
-        git(root, "reset", "-q", "--", *literal(repo_paths))
-        raise hold(f"the index holds other changes: {sorted(staged - set(repo_paths))}; {RECOVERY}")
-    state["staged"] = repo_paths
-    state_path(root).write_text(json.dumps(state))
-    tree = out(root, "write-tree")
-    print(out(root, "diff", "--no-renames", state["head"], tree))
+    try:
+        git(root, "add", "-A", "--", *literal(repo_paths))
+        names = git(root, "diff", "--cached", "--name-only", "--no-renames", "--no-relative", "-z").stdout
+        staged = set(filter(None, names.split("\0")))
+        if staged != set(repo_paths):
+            raise hold(f"the index differs from the run's files: extra {sorted(staged - set(repo_paths))}, missing {sorted(set(repo_paths) - staged)}")
+        state["staged"] = repo_paths
+        state_path(root).write_text(json.dumps(state))
+        tree = out(root, "write-tree")
+        print(out(root, "diff", "--no-ext-diff", "--no-textconv", "--no-color", "--no-renames", state["head"], tree))
+    except (Outcome, OSError) as error:
+        git(root, "reset", "-q", "--", *literal(repo_paths), check=False)
+        raise hold(f"{getattr(error, 'detail', error)}; {RECOVERY}")
     return Outcome("STAGED", 0, f"TREE {tree}")
 
 
@@ -211,7 +217,15 @@ def commit(root: Path, tree: str, message: str) -> Outcome:
         raise hold(f"{outcome.detail}; {RECOVERY}")
     state_path(root).unlink()
     lease = f"--force-with-lease={state['remote_ref']}:{state['head']}"
-    pushed = git(root, "push", "--no-follow-tags", "--recurse-submodules=no", lease, state["remote"], f"{new}:{state['remote_ref']}", check=False)
+    try:
+        pushed = git(
+            root, "-c", "credential.interactive=false",
+            "push", "--no-follow-tags", "--recurse-submodules=no", lease, state["remote"], f"{new}:{state['remote_ref']}",
+            check=False, stdin=subprocess.DEVNULL, start_new_session=True, timeout=PUSH_TIMEOUT,
+            env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
+        )
+    except subprocess.TimeoutExpired:
+        raise Outcome("PUSH_FAILED", 4, f"the push of commit {new} did not finish within {PUSH_TIMEOUT} seconds; check {state['remote']} before pushing again")
     if pushed.returncode:
         raise Outcome("PUSH_FAILED", 4, f"commit {new} stays local: {pushed.stderr.strip()}")
     return Outcome("PUSHED", 0, f"{new} to {state['remote']} {state['remote_ref']}")
