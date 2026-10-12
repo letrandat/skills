@@ -50,9 +50,14 @@ Authorization remains scoped in compound requests: permission to repair structur
 
 **Publish.** Applies when `brain_root` is inside a Git repository whose branch has an upstream; otherwise skip it and say so in the report.
 
-- **Baseline.** In `<brain_root>`, record `git status --porcelain -- <brain_root>` and `git rev-list --count @{upstream}..HEAD`.
-- **Hold** the run's changes uncommitted, and report why, when final validation has errors, when a file this run changed already had uncommitted edits in the baseline, or when the branch was already ahead of its upstream.
-- **Push** otherwise: stage exactly the files this run changed, confirm `git diff --cached --name-only` lists only them (otherwise unstage them and hold), commit with a message naming the action (for example `Record <concept title>`), and push to the upstream without asking. Report a failed push; never force-push.
+- **Baseline.** In `<brain_root>`, record `git status --porcelain -- <brain_root>`, `git rev-list --count @{upstream}..HEAD`, and the upstream as `<remote>/<branch>` from `git rev-parse --abbrev-ref @{upstream}`.
+- **Hold** the run's changes uncommitted, and report why, when any of these is true:
+  - final validation has errors;
+  - a file this run changed already had uncommitted edits in the baseline;
+  - the branch was already ahead of its upstream;
+  - HEAD is detached, or `git rev-parse -q --verify` finds `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, or `REBASE_HEAD`, at the baseline or at publish time;
+  - `git diff -- <file>` for a changed file shows a hunk this run did not write.
+- **Push** otherwise: stage exactly the files this run changed, confirm `git diff --cached --name-only` lists only them (otherwise unstage them and hold), commit with a message naming the action (for example `Record <concept title>`), and run `git push <remote> HEAD:<branch>` without asking. Report a failed push; never force-push.
 
 **Validator.** Run `python3 <skill_root>/scripts/validate.py <brain_root>`, where `<skill_root>` is the directory that contains this `SKILL.md` (the path used to load the skill). Prefer that resolved path over any host-specific environment variable.
 
