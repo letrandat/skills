@@ -102,7 +102,8 @@ class PublishTest(unittest.TestCase):
         (self.repo / "local.txt").write_text("unpushed")
         git(self.repo, "add", "local.txt")
         git(self.repo, "commit", "-q", "-m", "local")
-        self.run_publish("baseline")
+        code, output = self.run_publish("baseline")
+        self.assertEqual(code, 3, output)
         self.write("new.md", "New")
         code, output = self.publish_run("new.md")
         self.assertEqual(code, 3, output)
@@ -137,12 +138,14 @@ class PublishTest(unittest.TestCase):
         self.write("new.md", "New")
         code, output = self.run_publish("stage", "new.md")
         self.assertEqual(code, 0, output)
+        self.assertIn("Validation PASSED", output)
         tree = output.strip().splitlines()[-1].split()[-1]
         self.write("new.md", "Changed after review")
         git(self.repo, "add", "brain/new.md")
         code, output = self.run_publish("commit", "--tree", tree, "--message", "Record test")
         self.assertEqual(code, 3, output)
         self.assertIn("after it was reviewed", output)
+        self.assertEqual(git(self.repo, "diff", "--cached", "--name-only"), "")
 
     def test_skips_a_branch_without_upstream(self):
         git(self.repo, "switch", "-q", "-c", "loose")
@@ -224,6 +227,63 @@ class PublishTest(unittest.TestCase):
         code, output = self.publish_run("new.md")
         self.assertEqual(code, 0, output)
         self.assertEqual(git(self.remote, "tag", "--list"), "")
+
+    def test_signs_commits_when_commit_gpgsign_is_set(self):
+        key = Path(self._temporary_directory.name) / "key"
+        subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(key)], check=True)
+        for setting in (("gpg.format", "ssh"), ("user.signingkey", str(key)), ("commit.gpgsign", "true")):
+            git(self.repo, "config", *setting)
+        self.run_publish("baseline")
+        self.write("new.md", "New")
+        code, output = self.publish_run("new.md")
+        self.assertEqual(code, 0, output)
+        self.assertIn("gpgsig", git(self.remote, "cat-file", "commit", "main"))
+
+    def test_ignores_files_git_ignores(self):
+        (self.repo / ".gitignore").write_text(".DS_Store\n")
+        git(self.repo, "add", ".gitignore")
+        git(self.repo, "commit", "-q", "-m", "ignore")
+        git(self.repo, "push", "-q")
+        self.run_publish("baseline")
+        (self.root / ".DS_Store").write_bytes(b"finder noise")
+        self.write("new.md", "New")
+        code, output = self.publish_run("new.md")
+        self.assertEqual(code, 0, output)
+
+    def test_hashes_symlinks_without_following_them(self):
+        (self.root / "dangling.md").symlink_to("missing.md")
+        (self.root / "alias.md").symlink_to("seed.md")
+        git(self.repo, "add", "-A")
+        git(self.repo, "commit", "-q", "-m", "links")
+        git(self.repo, "push", "-q")
+        self.assertEqual(self.run_publish("baseline")[0], 0)
+        self.write("seed.md", "Seed edited by Brain")
+        code, output = self.publish_run("seed.md")
+        self.assertEqual(code, 0, output)
+
+    def test_treats_claimed_paths_literally(self):
+        (self.root / "d.md").write_text(CONCEPT.format(title="User draft"))
+        self.run_publish("baseline")
+        self.write("[draft].md", "Draft")
+        code, output = self.publish_run("[draft].md")
+        self.assertEqual(code, 0, output)
+        self.assertEqual(self.remote_files(), ["brain/[draft].md", "brain/seed.md"])
+
+    def test_holds_when_the_push_url_changes_after_baseline(self):
+        self.run_publish("baseline")
+        git(self.repo, "remote", "set-url", "--push", "origin", str(self.remote) + "-elsewhere")
+        self.write("new.md", "New")
+        code, output = self.publish_run("new.md")
+        self.assertEqual(code, 3, output)
+        self.assertIn("push_urls changed", output)
+
+    def test_holds_on_an_unreadable_state_file(self):
+        code, output = self.run_publish("baseline")
+        Path(output.split(": ", 1)[1].strip()).write_text("{broken")
+        self.write("new.md", "New")
+        code, output = self.publish_run("new.md")
+        self.assertEqual(code, 3, output)
+        self.assertIn("unreadable", output)
 
     def test_handles_non_ascii_paths(self):
         self.run_publish("baseline")

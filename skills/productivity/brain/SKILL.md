@@ -45,16 +45,16 @@ Authorization remains scoped in compound requests: permission to repair structur
    - **Complete when:** every selected operation file and every distinct applicable reference has been read completely.
 3. **Act.** Before the first change to Brain, record the **Publish** baseline (see below). Execute the selected files in dependency order, staying inside the authorization boundary and meeting each step’s completion check.
    - **Complete when:** every selected branch step is complete, and every proposed but unauthorized change is reserved for the report.
-4. **Close the run.** If Brain changed, ensure `<brain_root>/log.md` starts with `# Change Log`, add one consolidated entry with a bold action verb under today’s `## YYYY-MM-DD` heading in newest-first order, run the validator once against the final Knowledge Bundle (see **Validator** below), then publish (see **Publish** below). Report every mutation, validator warning, unresolved judgment call, and the publish result. A read-only run reports its answer or findings and confirms Brain remained unchanged.
+4. **Close the run.** If Brain changed, ensure `<brain_root>/log.md` starts with `# Change Log`, add one consolidated entry with a bold action verb under today’s `## YYYY-MM-DD` heading in newest-first order, run final validation once against the final Knowledge Bundle (see **Validator** below; when Publish reaches `stage`, its printed report is that run), then publish (see **Publish** below). Report every mutation, validator warning, unresolved judgment call, and the publish result. A read-only run reports its answer or findings and confirms Brain remained unchanged.
    - **Complete when:** a changing run has one correctly placed log entry, final validation has no errors, Publish ended in one of its four outcomes, and the report accounts for every mutation, warning, unresolved judgment call, and the publish result; or a read-only run has reported its result and made no changes.
 
 **Publish.** Run `python3 <skill_root>/scripts/publish.py` (same `<skill_root>` as the validator). Each command prints one outcome line; report the final one verbatim.
 
-1. `baseline <brain_root>` before the first change.
-2. `stage <brain_root> <file>...` with every file the run created, changed, or deleted, as paths relative to `<brain_root>`. It validates, stages exactly those files, and prints the staged diff and a `TREE` hash. Read the diff; if it shows a hunk this run did not write, unstage with `git -C <brain_root> reset -q -- <file>...`, stop, and report it as held.
-3. `commit <brain_root> --tree <hash> --message "<Action> <concept title>"` commits that reviewed tree and pushes it to the branch's upstream without asking.
+1. `baseline <brain_root>` before the first change. If it prints `SKIP` or `HOLD`, still make the run's changes, skip steps 2 and 3, and report that line.
+2. `stage <brain_root> <file>...` with every file the run created, changed, or deleted, as paths relative to `<brain_root>`. It prints the validator report, stages exactly those files, and prints their diff and a `TREE` hash. Read the diff; if it shows a hunk this run did not write, unstage every file you passed with `git -C <brain_root> reset -q -- <file>...`, stop, and report it as held.
+3. `commit <brain_root> --tree <hash> --message "<Action> <concept title>"` commits that reviewed tree, signed when `commit.gpgsign` is set, and pushes it to the branch's upstream without asking.
 
-The outcome is `PUSHED`, `SKIP` (no Git repository or upstream), `HOLD` (changes left uncommitted, with the reason), or `PUSH_FAILED` (the commit stays local, with Git's error). Each is a finished publish; never force-push.
+The outcome is `PUSHED`, `SKIP` (no Git repository or upstream), `HOLD` (changes left uncommitted and unstaged, with the reason), or `PUSH_FAILED` (the commit stays local, with Git's error). Each is a finished publish; never force-push. After a `HOLD`, tell the user that later runs touching the held files, which always includes `log.md`, will hold until those changes are committed or discarded.
 
 **Validator.** Run `python3 <skill_root>/scripts/validate.py <brain_root>`, where `<skill_root>` is the directory that contains this `SKILL.md` (the path used to load the skill). Prefer that resolved path over any host-specific environment variable.
 

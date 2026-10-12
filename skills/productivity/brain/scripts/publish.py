@@ -7,7 +7,7 @@
 
 Each command prints one outcome line. Exit codes: 0 BASELINE, STAGED, or
 PUSHED; 2 SKIP (no Git repository or no upstream); 3 HOLD (changes left
-uncommitted); 4 PUSH_FAILED (commit kept local); 1 usage error.
+uncommitted and unstaged); 4 PUSH_FAILED (commit kept local); 1 usage error.
 """
 
 from __future__ import annotations
@@ -31,6 +31,9 @@ class Outcome(Exception):
         self.label, self.code, self.detail = label, code, detail
 
 
+RECOVERY = "later runs that touch these files, including log.md, hold until the changes are committed or discarded"
+
+
 def hold(detail: str) -> Outcome:
     return Outcome("HOLD", 3, detail)
 
@@ -47,14 +50,37 @@ def out(root: Path, *args: str) -> str:
 
 
 def snapshot(root: Path) -> Dict[str, str]:
-    """Content hash of every file under the Brain root, untracked ones included."""
+    """Hash of every file Git could commit under the Brain root: tracked or untracked, not ignored."""
+    listed = git(root, "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", ".").stdout
     hashes = {}
-    for directory, subdirectories, files in os.walk(root):
-        subdirectories[:] = [name for name in subdirectories if name != ".git"]
-        for name in files:
-            path = Path(directory, name)
-            hashes[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+    for name in set(filter(None, listed.split("\0"))):
+        path = root / name
+        if path.is_symlink():
+            hashes[name] = "link:" + os.readlink(path)
+        elif path.is_file():
+            hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+        elif path.exists():
+            hashes[name] = "special"
     return hashes
+
+
+def dirty_paths(root: Path) -> List[str]:
+    """Repository-relative paths under the Brain root with uncommitted changes, rename sources included."""
+    fields = git(root, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--", ".").stdout.split("\0")
+    paths, index = [], 0
+    while index < len(fields):
+        entry = fields[index]
+        if entry:
+            paths.append(entry[3:])
+            if entry[0] in "RC":
+                index += 1
+                paths.append(fields[index])
+        index += 1
+    return paths
+
+
+def literal(names) -> List[str]:
+    return [f":(top,literal){name}" for name in names]
 
 
 def repo_state(root: Path) -> dict:
@@ -68,7 +94,14 @@ def repo_state(root: Path) -> dict:
     remote, _, remote_ref = out(
         root, "for-each-ref", "--format=%(upstream:remotename)%00%(upstream:remoteref)", branch
     ).partition("\0")
-    return {"head": out(root, "rev-parse", "HEAD"), "branch": branch, "remote": remote, "remote_ref": remote_ref}
+    push_urls = out(root, "remote", "get-url", "--push", "--all", remote) if remote not in ("", ".") else remote
+    return {
+        "head": out(root, "rev-parse", "HEAD"),
+        "branch": branch,
+        "remote": remote,
+        "remote_ref": remote_ref,
+        "push_urls": push_urls,
+    }
 
 
 def require_repo(root: Path) -> None:
@@ -85,13 +118,16 @@ def load(root: Path) -> dict:
     path = state_path(root)
     if not path.exists():
         raise hold("no baseline recorded for this run")
-    state = json.loads(path.read_text())
+    try:
+        state = json.loads(path.read_text())
+    except ValueError:
+        raise hold("the baseline state file is unreadable; run baseline again")
     if state.get("skip"):
         raise Outcome("SKIP", 2, state["skip"])
     if state.get("hold"):
         raise hold(f"at baseline: {state['hold']}")
     live = repo_state(root)
-    for key in ("head", "branch", "remote", "remote_ref"):
+    for key in ("head", "branch", "remote", "remote_ref", "push_urls"):
         if live[key] != state[key]:
             raise hold(f"{key} changed since the baseline ({state[key]} -> {live[key]})")
     return state
@@ -111,43 +147,68 @@ def baseline(root: Path) -> Outcome:
         elif git(root, "diff", "--cached", "--quiet", check=False).returncode:
             state["hold"] = "the index already has staged changes"
         else:
-            status = git(root, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--", ".").stdout
-            state["dirty"] = [entry[3:] for entry in status.split("\0") if entry[:2].strip()]
+            state["dirty"] = dirty_paths(root)
     except Outcome as outcome:
         state["hold"] = outcome.detail
     path.write_text(json.dumps(state))
+    if state.get("skip"):
+        raise Outcome("SKIP", 2, state["skip"])
+    if state.get("hold"):
+        raise hold(f"{state['hold']}; make the run's changes, skip stage and commit, and report this")
     return Outcome("BASELINE", 0, str(path))
 
 
 def stage(root: Path, files: Sequence[str]) -> Outcome:
     state = load(root)
-    if subprocess.run([sys.executable, str(VALIDATOR), str(root)], capture_output=True).returncode:
-        raise hold("final validation has errors")
+    validation = subprocess.run([sys.executable, str(VALIDATOR), str(root)], capture_output=True, text=True)
+    print(validation.stdout, end="")
+    if validation.returncode:
+        raise hold(f"final validation has errors; {RECOVERY}")
     claimed = {Path(os.path.relpath((root / name).resolve(), root.resolve())).as_posix() for name in files}
     current = snapshot(root)
     changed = {name for name in set(current) | set(state["snapshot"]) if current.get(name) != state["snapshot"].get(name)}
     if changed != claimed:
-        raise hold(f"changed files differ from the run's files: unexpected {sorted(changed - claimed)}, unchanged {sorted(claimed - changed)}")
+        raise hold(f"changed files differ from the run's files: unexpected {sorted(changed - claimed)}, unchanged {sorted(claimed - changed)}; {RECOVERY}")
     repo_paths = sorted(state["prefix"] + name for name in claimed)
     preexisting = sorted(set(state["dirty"]) & set(repo_paths))
     if preexisting:
-        raise hold(f"files had uncommitted edits before the run: {preexisting}")
-    git(root, "add", "-A", "--", *(f":/{name}" for name in repo_paths))
-    staged = set(filter(None, git(root, "diff", "--cached", "--name-only", "--no-renames", "-z").stdout.split("\0")))
+        raise hold(f"files had uncommitted edits before the run: {preexisting}; {RECOVERY}")
+    git(root, "add", "-A", "--", *literal(repo_paths))
+    names = git(root, "diff", "--cached", "--name-only", "--no-renames", "--no-relative", "-z").stdout
+    staged = set(filter(None, names.split("\0")))
     if staged != set(repo_paths):
-        git(root, "reset", "-q", "--", *(f":/{name}" for name in repo_paths))
-        raise hold(f"the index holds other changes: {sorted(staged - set(repo_paths))}")
+        git(root, "reset", "-q", "--", *literal(repo_paths))
+        raise hold(f"the index holds other changes: {sorted(staged - set(repo_paths))}; {RECOVERY}")
+    state["staged"] = repo_paths
+    state_path(root).write_text(json.dumps(state))
     tree = out(root, "write-tree")
     print(out(root, "diff", "--no-renames", state["head"], tree))
     return Outcome("STAGED", 0, f"TREE {tree}")
 
 
+def unstage(root: Path) -> None:
+    """Return the files `stage` added to the index to their committed state, leaving the working tree alone."""
+    try:
+        staged = json.loads(state_path(root).read_text()).get("staged", [])
+    except (Outcome, OSError, ValueError):
+        return
+    if staged:
+        git(root, "reset", "-q", "--", *literal(staged), check=False)
+
+
 def commit(root: Path, tree: str, message: str) -> Outcome:
-    state = load(root)
-    if out(root, "write-tree") != tree:
-        raise hold("the index changed after it was reviewed")
-    new = out(root, "commit-tree", tree, "-p", state["head"], "-m", message)
-    git(root, "update-ref", "-m", "brain publish", state["branch"], new, state["head"])
+    try:
+        state = load(root)
+        if out(root, "write-tree") != tree:
+            raise hold("the index changed after it was reviewed")
+        sign = git(root, "config", "--type=bool", "commit.gpgsign", check=False).stdout.strip() == "true"
+        new = out(root, "commit-tree", *(["-S"] if sign else []), tree, "-p", state["head"], "-m", message)
+        git(root, "update-ref", "-m", "brain publish", state["branch"], new, state["head"])
+    except Outcome as outcome:
+        if outcome.label != "HOLD":
+            raise
+        unstage(root)
+        raise hold(f"{outcome.detail}; {RECOVERY}")
     state_path(root).unlink()
     lease = f"--force-with-lease={state['remote_ref']}:{state['head']}"
     pushed = git(root, "push", "--no-follow-tags", "--recurse-submodules=no", lease, state["remote"], f"{new}:{state['remote_ref']}", check=False)
@@ -171,6 +232,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         outcome = run(list(sys.argv[1:] if argv is None else argv))
     except Outcome as raised:
         outcome = raised
+    except OSError as error:
+        outcome = hold(f"{error}; {RECOVERY}")
     print(f"{outcome.label}: {outcome.detail}" if outcome.detail else outcome.label)
     return outcome.code
 
