@@ -106,7 +106,7 @@ class PublishTest(unittest.TestCase):
         self.write("new.md", "New")
         code, output = self.publish_run("new.md")
         self.assertEqual(code, 3, output)
-        self.assertIn("ahead", output)
+        self.assertIn("ahead of or behind", output)
 
     def test_holds_when_head_moves_after_baseline(self):
         self.run_publish("baseline")
@@ -176,10 +176,45 @@ class PublishTest(unittest.TestCase):
         self.assertEqual(code, 0, output)
         self.assertNotIn("other.txt", git(self.remote, "ls-tree", "-r", "--name-only", "other"))
 
-    def test_reports_a_rejected_push_and_keeps_the_commit(self):
-        self.run_publish("baseline")
+    def other_clone(self):
         clone = Path(self._temporary_directory.name) / "elsewhere"
         git(self.repo.parent, "clone", "-q", str(self.remote), str(clone))
+        return clone
+
+    def test_holds_when_the_branch_is_behind_its_upstream(self):
+        clone = self.other_clone()
+        git(clone, "-c", "user.name=T", "-c", "user.email=t@e", "commit", "-q", "--allow-empty", "-m", "ahead")
+        git(clone, "push", "-q", "origin", "main")
+        git(self.repo, "fetch", "-q")
+        self.run_publish("baseline")
+        self.write("new.md", "New")
+        code, output = self.publish_run("new.md")
+        self.assertEqual(code, 3, output)
+        self.assertIn("ahead of or behind", output)
+
+    def test_refuses_to_republish_after_upstream_moves_backward(self):
+        (self.repo / "removed.txt").write_text("later removed upstream")
+        git(self.repo, "add", "removed.txt")
+        git(self.repo, "commit", "-q", "-m", "removed later")
+        git(self.repo, "push", "-q", "origin", "main")
+        self.run_publish("baseline")
+        clone = self.other_clone()
+        git(clone, "push", "-q", "--force", "origin", "main~1:main")
+        self.write("new.md", "New")
+        code, output = self.publish_run("new.md")
+        self.assertEqual(code, 4, output)
+        self.assertNotIn("removed.txt", self.remote_files())
+
+    def test_handles_non_ascii_paths(self):
+        self.run_publish("baseline")
+        self.write("café.md", "Café")
+        code, output = self.publish_run("café.md")
+        self.assertEqual(code, 0, output)
+        self.assertIn("brain/café.md", git(self.remote, "-c", "core.quotePath=false", "ls-tree", "-r", "--name-only", "main"))
+
+    def test_reports_a_rejected_push_and_keeps_the_commit(self):
+        self.run_publish("baseline")
+        clone = self.other_clone()
         git(clone, "-c", "user.name=T", "-c", "user.email=t@e", "commit", "-q", "--allow-empty", "-m", "race")
         git(clone, "push", "-q", "origin", "main")
         self.write("new.md", "New")

@@ -101,8 +101,8 @@ def baseline(root: Path) -> Outcome:
         state.update(repo_state(root))
         if not state["remote"]:
             state["skip"] = f"{state['branch']} has no upstream"
-        elif int(out(root, "rev-list", "--count", "@{upstream}..HEAD")):
-            state["hold"] = "the branch is already ahead of its upstream"
+        elif out(root, "rev-parse", "@{upstream}") != state["head"]:
+            state["hold"] = "the branch is ahead of or behind its upstream"
         elif git(root, "diff", "--cached", "--quiet", check=False).returncode:
             state["hold"] = "the index already has staged changes"
         else:
@@ -128,12 +128,13 @@ def stage(root: Path, files: Sequence[str]) -> Outcome:
     if preexisting:
         raise hold(f"files had uncommitted edits before the run: {preexisting}")
     git(root, "add", "-A", "--", *(f":/{name}" for name in repo_paths))
-    staged = set(out(root, "diff", "--cached", "--name-only", "--no-renames").splitlines())
+    staged = set(filter(None, git(root, "diff", "--cached", "--name-only", "--no-renames", "-z").stdout.split("\0")))
     if staged != set(repo_paths):
         git(root, "reset", "-q", "--", *(f":/{name}" for name in repo_paths))
         raise hold(f"the index holds other changes: {sorted(staged - set(repo_paths))}")
-    print(out(root, "diff", "--cached", "--no-renames"))
-    return Outcome("STAGED", 0, f"TREE {out(root, 'write-tree')}")
+    tree = out(root, "write-tree")
+    print(out(root, "diff", "--no-renames", state["head"], tree))
+    return Outcome("STAGED", 0, f"TREE {tree}")
 
 
 def commit(root: Path, tree: str, message: str) -> Outcome:
@@ -143,7 +144,8 @@ def commit(root: Path, tree: str, message: str) -> Outcome:
     new = out(root, "commit-tree", tree, "-p", state["head"], "-m", message)
     git(root, "update-ref", "-m", "brain publish", state["branch"], new, state["head"])
     state_path(root).unlink()
-    pushed = git(root, "push", state["remote"], f"{new}:{state['remote_ref']}", check=False)
+    lease = f"--force-with-lease={state['remote_ref']}:{state['head']}"
+    pushed = git(root, "push", lease, state["remote"], f"{new}:{state['remote_ref']}", check=False)
     if pushed.returncode:
         raise Outcome("PUSH_FAILED", 4, f"commit {new} stays local: {pushed.stderr.strip()}")
     return Outcome("PUSHED", 0, f"{new} to {state['remote']} {state['remote_ref']}")
