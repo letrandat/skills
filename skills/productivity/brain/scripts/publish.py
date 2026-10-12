@@ -71,11 +71,17 @@ def repo_state(root: Path) -> dict:
     return {"head": out(root, "rev-parse", "HEAD"), "branch": branch, "remote": remote, "remote_ref": remote_ref}
 
 
+def require_repo(root: Path) -> None:
+    if git(root, "rev-parse", "--is-inside-work-tree", check=False).returncode != 0:
+        raise Outcome("SKIP", 2, "brain_root is not in a Git repository")
+
+
 def state_path(root: Path) -> Path:
     return Path(out(root, "rev-parse", "--path-format=absolute", "--git-path", STATE_NAME))
 
 
 def load(root: Path) -> dict:
+    require_repo(root)
     path = state_path(root)
     if not path.exists():
         raise hold("no baseline recorded for this run")
@@ -92,8 +98,7 @@ def load(root: Path) -> dict:
 
 
 def baseline(root: Path) -> Outcome:
-    if git(root, "rev-parse", "--is-inside-work-tree", check=False).returncode != 0:
-        raise Outcome("SKIP", 2, "brain_root is not in a Git repository")
+    require_repo(root)
     path = state_path(root)
     prefix = out(root, "rev-parse", "--show-prefix")
     state: dict = {"prefix": prefix, "snapshot": snapshot(root)}
@@ -145,7 +150,7 @@ def commit(root: Path, tree: str, message: str) -> Outcome:
     git(root, "update-ref", "-m", "brain publish", state["branch"], new, state["head"])
     state_path(root).unlink()
     lease = f"--force-with-lease={state['remote_ref']}:{state['head']}"
-    pushed = git(root, "push", lease, state["remote"], f"{new}:{state['remote_ref']}", check=False)
+    pushed = git(root, "push", "--no-follow-tags", "--recurse-submodules=no", lease, state["remote"], f"{new}:{state['remote_ref']}", check=False)
     if pushed.returncode:
         raise Outcome("PUSH_FAILED", 4, f"commit {new} stays local: {pushed.stderr.strip()}")
     return Outcome("PUSHED", 0, f"{new} to {state['remote']} {state['remote_ref']}")

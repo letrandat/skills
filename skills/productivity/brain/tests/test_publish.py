@@ -205,6 +205,26 @@ class PublishTest(unittest.TestCase):
         self.assertEqual(code, 4, output)
         self.assertNotIn("removed.txt", self.remote_files())
 
+    def test_skips_every_step_outside_git(self):
+        outside = Path(self._temporary_directory.name) / "plain"
+        (outside / "a.md").parent.mkdir()
+        (outside / "a.md").write_text(CONCEPT.format(title="A"))
+        self.root = outside
+        self.assertEqual(self.run_publish("baseline")[0], 2)
+        self.write("b.md", "B")
+        code, output = self.run_publish("stage", "b.md")
+        self.assertEqual(code, 2, output)
+        self.assertIn("not in a Git repository", output)
+
+    def test_pushes_no_tags_under_push_follow_tags(self):
+        git(self.repo, "tag", "-a", "-m", "private", "private-tag")
+        git(self.repo, "config", "push.followTags", "true")
+        self.run_publish("baseline")
+        self.write("new.md", "New")
+        code, output = self.publish_run("new.md")
+        self.assertEqual(code, 0, output)
+        self.assertEqual(git(self.remote, "tag", "--list"), "")
+
     def test_handles_non_ascii_paths(self):
         self.run_publish("baseline")
         self.write("café.md", "Café")
