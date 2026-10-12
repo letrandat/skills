@@ -46,18 +46,15 @@ Authorization remains scoped in compound requests: permission to repair structur
 3. **Act.** Before the first change to Brain, record the **Publish** baseline (see below). Execute the selected files in dependency order, staying inside the authorization boundary and meeting each step’s completion check.
    - **Complete when:** every selected branch step is complete, and every proposed but unauthorized change is reserved for the report.
 4. **Close the run.** If Brain changed, ensure `<brain_root>/log.md` starts with `# Change Log`, add one consolidated entry with a bold action verb under today’s `## YYYY-MM-DD` heading in newest-first order, run the validator once against the final Knowledge Bundle (see **Validator** below), then publish (see **Publish** below). Report every mutation, validator warning, unresolved judgment call, and the publish result. A read-only run reports its answer or findings and confirms Brain remained unchanged.
-   - **Complete when:** a changing run has one correctly placed log entry, final validation has no errors, a Git-backed Brain has the run's changes pushed or the reason they were held reported, and the report accounts for every mutation, warning, unresolved judgment call, and the publish result; or a read-only run has reported its result and made no changes.
+   - **Complete when:** a changing run has one correctly placed log entry, final validation has no errors, Publish ended in one of its four outcomes, and the report accounts for every mutation, warning, unresolved judgment call, and the publish result; or a read-only run has reported its result and made no changes.
 
-**Publish.** Applies when `brain_root` is inside a Git repository whose branch has an upstream; otherwise skip it and say so in the report.
+**Publish.** Run `python3 <skill_root>/scripts/publish.py` (same `<skill_root>` as the validator). Each command prints one outcome line; report the final one verbatim.
 
-- **Baseline.** In `<brain_root>`, record `git status --porcelain -- <brain_root>`, `git rev-list --count @{upstream}..HEAD`, and the upstream as `<remote>/<branch>` from `git rev-parse --abbrev-ref @{upstream}`.
-- **Hold** the run's changes uncommitted, and report why, when any of these is true:
-  - final validation has errors;
-  - a file this run changed already had uncommitted edits in the baseline;
-  - the branch was already ahead of its upstream;
-  - HEAD is detached, or `git rev-parse -q --verify` finds `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, or `REBASE_HEAD`, at the baseline or at publish time;
-  - `git diff -- <file>` for a changed file shows a hunk this run did not write.
-- **Push** otherwise: stage exactly the files this run changed, confirm `git diff --cached --name-only` lists only them (otherwise unstage them and hold), commit with a message naming the action (for example `Record <concept title>`), and run `git push <remote> HEAD:<branch>` without asking. Report a failed push; never force-push.
+1. `baseline <brain_root>` before the first change.
+2. `stage <brain_root> <file>...` with every file the run created, changed, or deleted, as paths relative to `<brain_root>`. It validates, stages exactly those files, and prints the staged diff and a `TREE` hash. Read the diff; if it shows a hunk this run did not write, unstage with `git -C <brain_root> reset -q -- <file>...`, stop, and report it as held.
+3. `commit <brain_root> --tree <hash> --message "<Action> <concept title>"` commits that reviewed tree and pushes it to the branch's upstream without asking.
+
+The outcome is `PUSHED`, `SKIP` (no Git repository or upstream), `HOLD` (changes left uncommitted, with the reason), or `PUSH_FAILED` (the commit stays local, with Git's error). Each is a finished publish; never force-push.
 
 **Validator.** Run `python3 <skill_root>/scripts/validate.py <brain_root>`, where `<skill_root>` is the directory that contains this `SKILL.md` (the path used to load the skill). Prefer that resolved path over any host-specific environment variable.
 
