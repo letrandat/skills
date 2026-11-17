@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Hand back one short prompt that a coding agent can run without guessing. The user decides when to run it.
 
-A sharp prompt carries only what the agent can't find in the repo, in three slots:
+A sharp prompt fills three slots:
 
 - **Goal.** The behavior wanted, or the exact symptom and when it shows up.
 - **Guard.** What must stay the same.
