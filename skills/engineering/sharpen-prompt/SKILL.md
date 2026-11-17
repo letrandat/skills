@@ -1,14 +1,14 @@
 ---
 name: sharpen-prompt
-description: Turn a rough coding request into a short poteto-mode prompt with a goal, a guard, and a done-check.
+description: Turn a rough coding request into a short prompt with a goal, a guard, and a done-check.
 disable-model-invocation: true
 ---
 
 # Sharpen a prompt
 
-Hand back one short prompt that poteto-mode can run without guessing. The user decides when to run it.
+Hand back one short prompt that a coding agent can run without guessing. The user decides when to run it.
 
-poteto-mode's playbooks already add the ritual: reproduce first, measure first, verify on the real surface, show the evidence. A sharp prompt carries only what no playbook can know, in three slots:
+A sharp prompt carries only what the agent can't find in the repo, in three slots:
 
 - **Goal.** The behavior wanted, or the exact symptom and when it shows up.
 - **Guard.** What must stay the same.
@@ -29,17 +29,17 @@ poteto-mode's playbooks already add the ritual: reproduce first, measure first, 
 | Perf | Metric, named workload, and target | Correctness stays the same | The metric reaches the target on that workload |
 | Question | The question | No code changes | The answer cites files |
 
-Two kinds route ambiguously, so their prompt ends with the words that pin the playbook: Bug with `repro first, then fix and verify`, Question with `don't change any code yet`. When this replaces an active task, prepend `new task.`
+Two kinds are easy to misread, so their prompt ends with the words that pin the approach: Bug with `repro first, then fix and verify`, Question with `don't change any code yet`. When this replaces an active task, prepend `new task.`
 
 Unattended work ("I'm going to bed", "run until done") keeps its kind and adds a pass/fail finish condition, a fresh worktree, `keep a decision log`, and a stop-and-report escape: `if you're truly stuck, stop and write up why`.
 
 ## Format
 
 ```text
-/pstack:poteto-mode <goal>. <guard>. <done-check>.
+<goal>. <guard>. <done-check>.
 ```
 
-In Codex, start with `Use pstack:poteto-mode.` instead. Under the prompt, list each slot with its source: `repo: <path or command>`, `you: <answer>`, `default: <assumption>`, or `blank: <question>`.
+Under the prompt, list each slot with its source: `repo: <path or command>`, `you: <answer>`, `default: <assumption>`, or `blank: <question>`.
 
 ## Examples
 
@@ -50,11 +50,11 @@ Rough: "the export is broken, duplicates sometimes"
 User answers: "Duplicates occur when a retry lands mid-run; single-attempt exports work; tests/export_retry_test.py reproduces it."
 
 ```text
-/pstack:poteto-mode the export writes duplicate rows when a retry lands mid-run. single-attempt exports stay unchanged. the retry case in tests/export_retry_test.py goes from failing to passing. repro first, then fix and verify.
+the export writes duplicate rows when a retry lands mid-run. single-attempt exports stay unchanged. the retry case in tests/export_retry_test.py goes from failing to passing. repro first, then fix and verify.
 ```
 
 Rough: "add json to export"
 
 ```text
-/pstack:poteto-mode add a --json flag to the export command. text output stays byte-identical. on samples/project/, --json output parses with jq and plain output matches the current output.
+add a --json flag to the export command. text output stays byte-identical. on samples/project/, --json output parses with jq and plain output matches the current output.
 ```
